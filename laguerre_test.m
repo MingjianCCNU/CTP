@@ -1,0 +1,123 @@
+% 拉盖尔多项式计算方法比较与性能测试
+clear all; close all; clc;
+
+% 测试参数
+x = linspace(0, 10, 1000);  % 计算点
+n_max = 50;                 % 最大阶数
+num_runs = 10;              % 重复运行次数取平均
+
+% 预分配结果矩阵
+time_results = zeros(5, num_runs);
+error_results = zeros(4, num_runs);
+
+% 多次运行测试以获取更准确的性能数据
+for run = 1:num_runs
+    % 方法1：传统双重循环实现
+    tic;
+    result_loop = zeros(n_max+1, length(x));
+    for i = 1:length(x)
+        result_loop(1,i) = 1;
+        if n_max >= 1
+            result_loop(2,i) = 1 - x(i);
+        end
+        for k = 2:n_max
+            result_loop(k+1,i) = ((2*k-1 - x(i))*result_loop(k,i) - (k-1)*result_loop(k-1,i))/k;
+        end
+    end
+    time_results(1,run) = toc;
+    
+    % 方法2：向量化递推实现
+    tic;
+    result_vec = zeros(n_max+1, length(x));
+    result_vec(1,:) = 1;
+    if n_max >= 1
+        result_vec(2,:) = 1 - x;
+    end
+    for k = 2:n_max
+        result_vec(k+1,:) = ((2*k-1 - x).*result_vec(k,:) - (k-1)*result_vec(k-1,:))/k;
+    end
+    time_results(2,run) = toc;
+    
+    % 方法3：MATLAB内置函数
+    tic;
+    result_builtin = zeros(n_max+1, length(x));
+    for k = 0:n_max
+        result_builtin(k+1,:) = laguerreL(k, x);
+    end
+    time_results(3,run) = toc;
+    
+    % 方法4：解析表达式直接求和（修正版本）
+    tic;
+    result_analytical = zeros(n_max+1, length(x));
+    for m = 1:length(x)
+        for k = n_max
+            sum_val = 0;
+            for j = 0:k
+                sum_val = sum_val + nchoosek(k,j) * (-x(m))^j / factorial(j);
+            end
+            result_analytical(k+1, m) = sum_val;
+        end
+    end
+    time_results(4,run) = toc;
+    
+    % 方法5：优化的解析表达式（使用prod计算组合数）
+    tic;
+    result_analytical_opt = zeros(n_max+1, length(x));
+    for m = 1:length(x)
+        for k = n_max
+            sum_val = 0;
+            for j = 0:k
+                % 直接计算组合数 C(k,j) = k!/(j!(k-j)!)
+                if j == 0 || j == k
+                    comb = 1;
+                else
+                    min_j = min(j, k-j);
+                    comb = prod((k-min_j+1):k) / prod(1:min_j);
+                end
+                sum_val = sum_val + comb * (-x(m))^j / factorial(j);
+            end
+            result_analytical_opt(k+1, m) = sum_val;
+        end
+    end
+    time_results(5,run) = toc;
+    
+    % 计算与内置函数结果的误差
+    error_results(1,run) = norm(result_loop - result_builtin, 'fro');
+    error_results(2,run) = norm(result_vec - result_builtin, 'fro');
+    error_results(3,run) = norm(result_analytical - result_builtin, 'fro');
+    error_results(4,run) = norm(result_analytical_opt - result_builtin, 'fro');
+end
+
+% 计算平均运行时间和误差
+avg_time = mean(time_results, 2);
+avg_error = mean(error_results, 2);
+
+% 绘制性能比较图
+figure('Position', [100, 100, 1000, 400]);
+
+% 运行时间比较
+subplot(1,2,1);
+bar(avg_time);
+set(gca, 'XTick', 1:5, 'XTickLabel', {'循环', '向量化', '内置函数', '解析公式', '优化解析'});
+title('不同方法计算时间比较');
+ylabel('运行时间 (秒)');
+grid on;
+
+% 误差比较（对数刻度）
+subplot(1,2,2);
+bar(avg_error);
+set(gca, 'XTick', 1:4, 'XTickLabel', {'循环', '向量化', '解析公式', '优化解析'});
+title('与内置函数结果的误差比较');
+ylabel('Frobenius范数误差');
+set(gca, 'YScale', 'log');
+grid on;
+
+% 打印性能数据
+fprintf('===== 计算性能比较 (n = %d, 点数 = %d) =====\n', n_max, length(x));
+fprintf('方法\t\t平均时间 (秒)\t\t相对性能\t\t平均误差\n');
+fprintf('---------------------------------------------------------------\n');
+fprintf('循环\t\t%.6f\t\t%.2f%%\t\t%.2e\n', avg_time(1), avg_time(1)/avg_time(3)*100, avg_error(1));
+fprintf('向量化\t\t%.6f\t\t%.2f%%\t\t%.2e\n', avg_time(2), avg_time(2)/avg_time(3)*100, avg_error(2));
+fprintf('内置函数\t%.6f\t\t100.00%%\t\t0 (参考)\n', avg_time(3));
+fprintf('解析公式\t%.6f\t\t%.2f%%\t\t%.2e\n', avg_time(4), avg_time(4)/avg_time(3)*100, avg_error(3));
+fprintf('优化解析\t%.6f\t\t%.2f%%\t\t%.2e\n', avg_time(5), avg_time(5)/avg_time(3)*100, avg_error(4));
