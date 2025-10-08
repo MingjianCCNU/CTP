@@ -103,7 +103,7 @@ end
 tic
 Fps = zeros(Nr, 1);
 F = Fps;
-parfor pindex = 1:Nr
+for pindex = 1:Nr
     r = rdBbin(pindex)/8.69;
     % Initial covariance matrix
     Sigma_sqz = [exp(-2*r),0;0,exp(2*r)];

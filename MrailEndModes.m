@@ -1,9 +1,9 @@
-clc;clear all
+clear
 % 设置所有线条的默认粗细为1.5
 set(groot, 'DefaultLineLineWidth', 1.5);  
 % number of modes in the cluster state
-K = 10; 
-Nr = 512;
+K = 4; 
+Nr = 128;
 
 % number for photons subtracted for the two modes
 nphotons = 1; 
@@ -42,7 +42,7 @@ multirail_TP_rec
 plot(abs(rdBbin), Fps, '-.', Color="#8290bb", Marker="x",...
     MarkerIndices = 1:64:Nr)
 
-nphotons = 6; 
+nphotons = 25; 
 psv = zeros(2*K, 1);
 psv(1:2) = nphotons;
 psv(end-1:end) = nphotons;

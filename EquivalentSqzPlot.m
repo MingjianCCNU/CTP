@@ -1,3 +1,4 @@
+% 多径簇态施加PS后的等效sqz
 clc;clear
 % 1245 sub:
 Nr = 1e3;

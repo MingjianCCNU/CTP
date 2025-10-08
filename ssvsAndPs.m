@@ -1,3 +1,4 @@
+% 单模真空压缩态施加PS后的压缩度
 clc;clear
 % 设置所有线条的默认粗细为2点
 set(groot, 'DefaultLineLineWidth', 1.5);  

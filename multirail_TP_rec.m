@@ -1,3 +1,4 @@
+% 采用递归法计算H的快速计算版本
 rdBbin = linspace(-0.0001, -16, Nr);
 
 xplim = 4;
@@ -77,7 +78,8 @@ parfor pindex = 1:Nr
     V = Sr * Sigma0 * Sr';
 
     % 此处ZJ的操作实际上是把CM从x,p转换至xi,xi*
-    Vt = Zk*J*V*J'*Zk-diag(psv/nphotons)/2;
+    Vt = Zk*J*V*J'*Zk-diag(psv/nphotons)/2; % PS
+    % Vt = Zk*J*V*J'*Zk+diag(psv/nphotons)/2; % PA
     Matin = -0.5*X*Vt;
     xintiao = reshape(pagemtimes(X*Vt, reshape(xin, [2*K, 1, Nx, Np])), [2*K, Nx, Np]);
 
